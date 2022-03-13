@@ -12,6 +12,7 @@ import org.jodconverter.local.*;
 import org.jodconverter.core.office.*;
 import org.jodconverter.local.office.*;
 import org.jodconverter.remote.office.*;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,29 +21,30 @@ import java.lang.IllegalArgumentException;
 import com.google.gson.*;
 import com.sun.star.comp.loader.JavaLoader;
 
+import java.nio.file.Paths;
+
 class docman{
 	public static void main(String[] args) throws IOException{
 		System.out.println("DOCMAN");
 
-		String temp = unzip("orig.docx");
-		String contentPath = temp+"/word/document.xml";
+		Map<String, String> attributes = new HashMap<String, String>();
+		attributes.put("number", "22");
+		attributes.put("text", "Something New Here");
 
-		Path file = Path.of(contentPath);
+		String updatedDoc = replacePlaceholders("template.docx", attributes);
+		String pdf = convertToPDF(updatedDoc);
+	}
 
-		String content = Files.readString(file);
-
-		System.out.println(content.contains("[number]"));
-		String newContent = content.replaceAll("\\[number\\]", "22");
-		Files.write(file, newContent.getBytes());
-
-		Path toZip = Path.of(temp);
-	    zipFolder(toZip, "test.docx");
-
-		File inputFile = new File("test.docx");
-		File outputFile = new File("document.pdf");
+	public static String convertToPDF(String file){
+		File inputFile = new File(file);
+		String newName = file.replace(".docx", ".pdf");
+		File outputFile = new File(newName);
 
 		//final RemoteOfficeManager officeManager = RemoteOfficeManager.install("127.0.0.1");
-		final LocalOfficeManager officeManager = LocalOfficeManager.install();
+		final LocalOfficeManager officeManager = LocalOfficeManager
+													//.officeHome("")
+													//.build();
+													.install();
 		try {
 			officeManager.start();
 
@@ -51,15 +53,50 @@ class docman{
 					 .to(outputFile)
 					 .execute();
 		} catch(OfficeException e){
-			//
+			e.printStackTrace();
 		} finally {
 			OfficeUtils.stopQuietly(officeManager);
 		}
+		return newName;
+	}
+
+	public static String replacePlaceholders(String template, Map<String, String> data) throws IOException{
+		String tempLocation = unzip(template);
+		String contentPath = tempLocation+"/word/document.xml";
+		String content = getFileContent(contentPath);
+
+		for(Map.Entry<String, String> entry : data.entrySet()){
+			String selector = "\\["+entry.getKey()+"\\]";
+			String value = entry.getValue();
+			content = content.replaceAll(selector, value);
+		}
+
+		updateFileContent(contentPath, content);
+		Path toZip = Paths.get(tempLocation);
+		String newDocName = "updated.docx"; // replace with random name
+		zipFolder(toZip, newDocName);
+		deleteDir(tempLocation);
+		return newDocName;
+	}
+
+	public static void updateFileContent(String filePath, String fileContent) throws IOException{
+		Path file = Paths.get(filePath);
+		Files.write(file, fileContent.getBytes());
+	}
+
+	public static String getFileContent(String filePath){
+		String content = "";
+		try{
+			content = new String ( Files.readAllBytes( Paths.get(filePath) ) );
+		}catch (IOException e){
+			e.printStackTrace();
+		}
+		return content;
 	}
 
 	public static void zipFolder(Path source, String zipFileName) throws IOException {
         try(ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipFileName))) {
-            Files.walkFileTree(source, new SimpleFileVisitor<>() {
+            Files.walkFileTree(source, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult visitFile(Path file,
                     BasicFileAttributes attributes) {
@@ -82,12 +119,24 @@ class docman{
                 }
                 @Override
                 public FileVisitResult visitFileFailed(Path file, IOException exc) {
-                    System.err.printf("Unable to zip : %s%n%s%n", file, exc);
                     return FileVisitResult.CONTINUE;
                 }
             });
         }
     }
+
+	public static void deleteDir(String path){
+		File source = new File(path);
+		File[] content = source.listFiles();
+		if(content != null){
+			for(File f : content){
+				if(!Files.isSymbolicLink(f.toPath())){
+					deleteDir(f.toString());
+				}
+			}
+		}
+		source.delete();
+	}
 
 	public static String randomDir(){
 		byte[] array = new byte[7]; // length is bounded by 7
