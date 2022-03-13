@@ -23,3 +23,10 @@ Convert docx to pdf using JODConverter library (https://github.com/sbraconnier/j
 ```
 String pdf = convertToPDF("document.docx");
 ```
+
+### Running example
+```
+javac -cp "./src/*:./lib/*" ./src/main.java
+cp src/*.class .
+java -cp ".:./lib/*" docman
+```
