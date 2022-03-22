@@ -1,3 +1,5 @@
+package com.fearricepudding;
+
 import java.util.zip.*;
 import java.io.*;
 import java.nio.file.Files;
@@ -23,18 +25,7 @@ import com.sun.star.comp.loader.JavaLoader;
 
 import java.nio.file.Paths;
 
-class docman{
-    public static void main(String[] args) throws IOException{
-        System.out.println("DOCMAN");
-
-        Map<String, String> attributes = new HashMap<String, String>();
-        attributes.put("number", "22");
-        attributes.put("text", "Something New Here");
-
-        String updatedDoc = replacePlaceholders("template.docx", attributes);
-        String pdf = convertToPDF(updatedDoc);
-    }
-
+public class Docman{
     public static String convertToPDF(String file){
         File inputFile = new File(file);
         String newName = file.replace(".docx", ".pdf");
