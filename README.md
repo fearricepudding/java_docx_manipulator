@@ -9,24 +9,63 @@
 - Openoffice uno (http://www.openoffice.org/udk/)
 - libreoffice unoil (https://www.libreoffice.org/)
 
+### full example usage
+```
+import com.fearricepudding.Docman;
+import java.util.*;
+
+public class example{
+	public static void main(String[] args){
+		Map<String, String> attributes = new HashMap<String, String>();
+		attributes.put("number", "22");
+		attributes.put("text", "Example text");
+		
+		try{
+			String updateDoc = Docman.replacePlaceholders("template.docx", attributes);
+			System.out.println("Created document from template: "+updateDoc);
+		}catch(Exception e){
+			System.out.println("An error create document from tempalte: "+ e);
+		}
+
+		try{
+			String pdf = Docman.convertToPDF("updated.docx");
+			System.out.println("Created PDF from docx: "+pdf);
+		}catch(Exception e){
+			System.out.println("An error converting to PDF: "+e);
+		}
+	}
+}
+```
+
 ### Features
 replace placeholders `[placeholder]` with information using a Map of attributes and generate an updated docx from a template 
 
 ```
-Map<String, String> attributes = new HashMap<String, String>();     
-attributes.put("number", "22");                                           
-attributes.put("text", "Something New Here");                     
-String updatedDoc = replacePlaceholders("template.docx", attributes);
+Map<String, String> attributes = new HashMap<String, String>();
+attributes.put("number", "22");
+attributes.put("text", "Example text");
+
+try{
+  String updateDoc = Docman.replacePlaceholders("template.docx", attributes);
+  System.out.println("Created document from template: "+updateDoc);
+}catch(Exception e){
+  System.out.println("An error create document from tempalte: "+ e);
+}
+
 ```
 
 Convert docx to pdf using JODConverter library (https://github.com/sbraconnier/jodconverter)
 ```
-String pdf = convertToPDF("document.docx");
+try{
+  String pdf = Docman.convertToPDF("updated.docx");
+  System.out.println("Created PDF from docx: "+pdf);
+}catch(Exception e){
+  System.out.println("An error converting to PDF: "+e);
+}
 ```
 
 ### Running example
 ```
-javac -cp "./src/*:./lib/*" ./src/main.java
-cp src/*.class .
-java -cp ".:./lib/*" docman
+cd example
+./run.sh
 ```
